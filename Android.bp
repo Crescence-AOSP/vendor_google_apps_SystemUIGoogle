@@ -13,7 +13,11 @@ android_library {
         "src/**/*.java",
         "src/**/*.aidl",
     ],
-    static_libs: ["SystemUIGoogle-res"],
+    static_libs: [
+        "SystemUIGoogle-res",
+        "smartspace-proto-java",
+        "smartspace-proto-lite-java",
+    ],
     manifest: "AndroidManifest.xml",
     plugins: ["dagger2-compiler"],
 }
