@@ -93,7 +93,16 @@ import com.android.systemui.util.kotlin.SysUICoroutinesModule;
 import com.android.systemui.volume.dagger.VolumeModule;
 import com.android.systemui.wallpapers.dagger.WallpaperModule;
 
+import com.android.systemui.flags.FeatureFlags;
+import com.android.systemui.plugins.BcSmartspaceDataPlugin;
+import com.android.systemui.smartspace.config.BcSmartspaceConfigProvider;
+import com.android.systemui.smartspace.dagger.SmartspaceModule;
 import com.google.android.systemui.power.dagger.PowerModuleGoogle;
+import com.google.android.systemui.smartspace.BcSmartspaceDataProvider;
+import com.google.android.systemui.smartspace.DateSmartspaceDataProvider;
+import com.google.android.systemui.smartspace.KeyguardSmartspaceStartable;
+import com.google.android.systemui.smartspace.WeatherSmartspaceDataProvider;
+import com.google.android.systemui.smartspace.dagger.SmartspaceGoogleModule;
 
 import dagger.Binds;
 import dagger.Module;
@@ -177,6 +186,7 @@ import javax.inject.Provider;
         ActionCornerModule.class,
         CursorPositionModule.class,
         ContextualCursorModule.class,
+        SmartspaceGoogleModule.class,
 }, subcomponents = {
         ReferenceSysUIDisplaySubcomponent.class
 })
@@ -276,4 +286,36 @@ public abstract class SystemUIGoogleModule {
     static Set<Class<? extends CoreStartable>> providesStatusBarStateControllerDeps() {
         return Set.of(CentralSurfaces.class);
     }
+
+    @Provides
+    @SysUISingleton
+    static BcSmartspaceDataPlugin provideBcSmartspaceDataPlugin() {
+        return new BcSmartspaceDataProvider();
+    }
+
+    @Provides
+    @SysUISingleton
+    @Named(SmartspaceModule.DATE_SMARTSPACE_DATA_PLUGIN)
+    static BcSmartspaceDataPlugin provideDateSmartspaceDataPlugin() {
+        return new DateSmartspaceDataProvider();
+    }
+
+    @Provides
+    @SysUISingleton
+    @Named(SmartspaceModule.WEATHER_SMARTSPACE_DATA_PLUGIN)
+    static BcSmartspaceDataPlugin provideWeatherSmartspaceDataPlugin() {
+        return new WeatherSmartspaceDataProvider();
+    }
+
+    @Provides
+    @SysUISingleton
+    static BcSmartspaceConfigProvider provideBcSmartspaceConfigPlugin(FeatureFlags featureFlags) {
+        return new BcSmartspaceConfigProvider(featureFlags);
+    }
+
+    @Binds
+    @IntoMap
+    @ClassKey(KeyguardSmartspaceStartable.class)
+    abstract CoreStartable bindKeyguardSmartspaceStartable(
+            KeyguardSmartspaceStartable startable);
 }
