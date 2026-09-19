@@ -46,7 +46,6 @@ import com.android.systemui.minmode.MinModeManagerImpl;
 import com.android.systemui.navigationbar.NavigationBarControllerModule;
 import com.android.systemui.navigationbar.gestural.GestureModule;
 import com.android.systemui.plugins.qs.QSFactory;
-import com.android.systemui.power.dagger.PowerModule;
 import com.android.systemui.qs.QSFragmentStartableModule;
 import com.android.systemui.qs.dagger.QSModule;
 import com.android.systemui.qs.tileimpl.QSFactoryImpl;
@@ -93,6 +92,8 @@ import com.android.systemui.unfold.UnfoldTransitionModule;
 import com.android.systemui.util.kotlin.SysUICoroutinesModule;
 import com.android.systemui.volume.dagger.VolumeModule;
 import com.android.systemui.wallpapers.dagger.WallpaperModule;
+
+import com.google.android.systemui.power.dagger.PowerModuleGoogle;
 
 import dagger.Binds;
 import dagger.Module;
@@ -144,7 +145,7 @@ import javax.inject.Provider;
         NavigationBarControllerModule.class,
         NearbyMediaDevicesManager.StartableModule.class,
         NoOpActivityRecognitionModule.class,
-        PowerModule.class,
+        PowerModuleGoogle.class,
         QSFragmentStartableModule.class,
         QSModule.class,
         RearDisplayModule.class,
