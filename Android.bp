@@ -1,0 +1,50 @@
+android_library {
+    name: "SystemUIGoogle-res",
+    use_resource_processor: true,
+    resource_dirs: ["res"],
+    static_libs: ["SystemUI-application"],
+    manifest: "AndroidManifest-res.xml",
+}
+
+android_library {
+    name: "SystemUIGoogle-core",
+    srcs: [
+        "src/**/*.kt",
+        "src/**/*.java",
+        "src/**/*.aidl",
+    ],
+    static_libs: ["SystemUIGoogle-res"],
+    manifest: "AndroidManifest.xml",
+    plugins: ["dagger2-compiler"],
+}
+
+android_app {
+    name: "SystemUIGoogle",
+    defaults: [
+        "platform_app_defaults",
+        "SystemUI_optimized_defaults",
+        "wmshell_defaults",
+    ],
+    static_libs: ["SystemUIGoogle-core"],
+    resource_dirs: [],
+    use_resource_processor: true,
+    enable_ksp: true,
+    platform_apis: true,
+    system_ext_specific: true,
+    certificate: "platform",
+    privileged: true,
+    kotlincflags: ["-Xjvm-default=all"],
+    dxflags: ["--multi-dex"],
+    optimize: {
+        proguard_flags_files: ["proguard.flags"],
+        included_proguard_flags_files: [
+            ":sysui_proguard_common_and_kotlin",
+        ],
+    },
+    required: [
+        "privapp_whitelist_com.android.systemui",
+    ],
+    overrides: [
+        "SystemUI",
+    ],
+}
