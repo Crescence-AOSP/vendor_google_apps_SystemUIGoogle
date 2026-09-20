@@ -83,8 +83,8 @@ public class HeadToHeadTemplateCard extends BcSmartspaceCardSecondary {
             } else {
                 BcSmartspaceTemplateDataUtils.setText(mFirstCompetitorText, firstCompetitorText);
                 BcSmartspaceTemplateDataUtils.updateVisibility(mFirstCompetitorText, View.VISIBLE);
-                isValid = true;
             }
+            isValid = true;
         }
 
         Text secondCompetitorText = templateData.getHeadToHeadSecondCompetitorText();
@@ -94,8 +94,8 @@ public class HeadToHeadTemplateCard extends BcSmartspaceCardSecondary {
             } else {
                 BcSmartspaceTemplateDataUtils.setText(mSecondCompetitorText, secondCompetitorText);
                 BcSmartspaceTemplateDataUtils.updateVisibility(mSecondCompetitorText, View.VISIBLE);
-                isValid = true;
             }
+            isValid = true;
         }
 
         Icon firstCompetitorIcon = templateData.getHeadToHeadFirstCompetitorIcon();
@@ -105,8 +105,8 @@ public class HeadToHeadTemplateCard extends BcSmartspaceCardSecondary {
             } else {
                 BcSmartspaceTemplateDataUtils.setIcon(mFirstCompetitorIcon, firstCompetitorIcon);
                 BcSmartspaceTemplateDataUtils.updateVisibility(mFirstCompetitorIcon, View.VISIBLE);
-                isValid = true;
             }
+            isValid = true;
         }
 
         Icon secondCompetitorIcon = templateData.getHeadToHeadSecondCompetitorIcon();
@@ -116,8 +116,8 @@ public class HeadToHeadTemplateCard extends BcSmartspaceCardSecondary {
             } else {
                 BcSmartspaceTemplateDataUtils.setIcon(mSecondCompetitorIcon, secondCompetitorIcon);
                 BcSmartspaceTemplateDataUtils.updateVisibility(mSecondCompetitorIcon, View.VISIBLE);
-                isValid = true;
             }
+            isValid = true;
         }
 
         if (isValid && templateData.getHeadToHeadAction() != null) {

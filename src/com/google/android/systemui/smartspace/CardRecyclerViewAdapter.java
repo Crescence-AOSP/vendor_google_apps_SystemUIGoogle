@@ -10,6 +10,7 @@ import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.LayerDrawable;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Parcelable;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.SparseArray;
@@ -39,6 +40,7 @@ import com.google.android.systemui.smartspace.uitemplate.BaseTemplateCard;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -575,6 +577,8 @@ public final class CardRecyclerViewAdapter
     }
 
     public final void updateTargetVisibility(Runnable runnable, boolean force) {
+        List<SmartspaceTarget> currentTargets = smartspaceTargets;
+
         List<SmartspaceTarget> aodTargets =
                 !mediaTargets.isEmpty()
                         ? mediaTargets
@@ -585,48 +589,78 @@ public final class CardRecyclerViewAdapter
                         ? _lockscreenTargets
                         : mediaTargets;
 
-        List<SmartspaceTarget> currentTargets = smartspaceTargets;
-
         boolean showAodTargets =
-                dozeAmount == 1.0f
-                        || (dozeAmount >= 0.36f && transitioningTo == TransitionType.TO_AOD);
+                currentTargets != aodTargets
+                        && (dozeAmount == 1.0f
+                                || (dozeAmount >= 0.36f
+                                        && transitioningTo == TransitionType.TO_AOD));
+        boolean showLockscreenTargets =
+                currentTargets != lockscreenTargets && needToSetToLockscreenTargets();
 
-        List<SmartspaceTarget> newTargets = currentTargets;
         if (showAodTargets) {
-            if (currentTargets != aodTargets) {
-                Log.d(
-                        "SsCardRecyclerViewAdapter",
-                        "Updating Smartspace targets to targets for AOD");
-                newTargets = aodTargets;
-            }
-        } else if (needToSetToLockscreenTargets()) {
-            if (currentTargets != lockscreenTargets) {
-                Log.d(
-                        "SsCardRecyclerViewAdapter",
-                        "Updating Smartspace targets to targets for Lockscreen");
-                newTargets = lockscreenTargets;
-            }
+            Log.d("SsCardRecyclerViewAdapter", "Updating Smartspace targets to targets for AOD");
+            smartspaceTargets = aodTargets;
+        } else if (showLockscreenTargets) {
+            Log.d(
+                    "SsCardRecyclerViewAdapter",
+                    "Updating Smartspace targets to targets for Lockscreen");
+            smartspaceTargets = lockscreenTargets;
         }
 
-        if (newTargets != currentTargets || force) {
-            smartspaceTargets = newTargets;
+        if (force || showAodTargets || showLockscreenTargets) {
             viewHolders.clear();
+            List<SmartspaceTarget> previousList = mDiffer.getCurrentList();
+            if (!previousList.isEmpty()
+                    && !smartspaceTargets.isEmpty()
+                    && (previousList.size() > 1 || smartspaceTargets.size() > 1)
+                    && root != null
+                    && root.mScrollState == ViewPager2.SCROLL_STATE_IDLE
+                    && root.mViewPager2.getCurrentItem() == 0) {
+                SmartspaceTarget previousFirst =
+                        previousList.isEmpty() ? null : previousList.get(0);
+                String previousId = previousFirst != null ? previousFirst.getSmartspaceTargetId() : null;
+                SmartspaceTarget newFirst =
+                        smartspaceTargets.isEmpty() ? null : smartspaceTargets.get(0);
+                String newId = newFirst != null ? newFirst.getSmartspaceTargetId() : null;
+                if (!Objects.equals(previousId, newId) && viewPager2 != null) {
+                    viewPager2.addOnLayoutChangeListener(
+                            new ViewPager2.OnLayoutChangeListener() {
+                                @Override
+                                public void onLayoutChange(
+                                        View v,
+                                        int left,
+                                        int top,
+                                        int right,
+                                        int bottom,
+                                        int oldLeft,
+                                        int oldTop,
+                                        int oldRight,
+                                        int oldBottom) {
+                                    v.removeOnLayoutChangeListener(this);
+                                    ((ViewPager2) v).setCurrentItem(0, false);
+                                }
+                            });
+                }
+            }
             mDiffer.submitList(new ArrayList<>(smartspaceTargets), runnable);
         }
 
         hasAodLockscreenTransition = aodTargets != lockscreenTargets;
+        if (uiSurface == null || BcSmartspaceDataPlugin.UI_SURFACE_HOME_SCREEN.equals(uiSurface)) {
+            return;
+        }
         BcSmartspaceTemplateDataUtils.updateVisibility(
                 root, smartspaceTargets.isEmpty() ? View.GONE : View.VISIBLE);
     }
 
-    public final void setTargets(List<SmartspaceTarget> list, Runnable runnable) {
+    public final void setTargets(List<? extends Parcelable> list, Runnable runnable) {
         Bundle extras;
         _aodTargets.clear();
         _lockscreenTargets.clear();
         hasDifferentTargets = false;
-        Iterator<SmartspaceTarget> it = list.iterator();
+        Iterator<? extends Parcelable> it = list.iterator();
         while (it.hasNext()) {
-            SmartspaceTarget smartspaceTarget = it.next();
+            SmartspaceTarget smartspaceTarget = (SmartspaceTarget) it.next();
             if (smartspaceTarget.getFeatureType() == 34
                     || (smartspaceTarget.getRemoteViews() == null
                             && !isTemplateCard(smartspaceTarget)
