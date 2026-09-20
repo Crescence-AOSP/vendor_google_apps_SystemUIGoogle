@@ -18,6 +18,24 @@
       "serverId": "c809e42e-2716-43b8-85a5-914f291e2dfa"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "18ae1551_c2b35284",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1000000
+      },
+      "writtenOn": "2026-09-20T08:30:47Z",
+      "side": 1,
+      "message": "i saw some commented code in the impl so i wanted to complete them",
+      "parentUuid": "ed5037dd_f9755e6c",
+      "revId": "04bf566567dba07249da90d5c72ba157c3e0a613",
+      "serverId": "c809e42e-2716-43b8-85a5-914f291e2dfa"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "b2e0e0ff_23887686",
