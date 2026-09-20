@@ -31,6 +31,7 @@ import com.google.android.systemui.smartspace.BcSmartspaceCardSecondary;
 import com.google.android.systemui.smartspace.logging.BcSmartspaceCardLoggerUtil;
 import com.google.android.systemui.smartspace.logging.BcSmartspaceCardLoggingInfo;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
@@ -141,17 +142,16 @@ public class SubImageTemplateCard extends BcSmartspaceCardSecondary {
                             return;
                         }
 
-                        if (drawable != null) {
-                            mIconDrawableCache.put(cacheKey, drawable);
-                            frameMap.put(index, drawable);
-                        }
+                        mIconDrawableCache.put(cacheKey, drawable);
+                        frameMap.put(index, drawable);
 
                         if (frameMap.size() == subImages.size()) {
                             createAndStartAnimation(frameMap, frameDurationMillis, imageViewRef);
                         }
                     };
 
-            if (mIconDrawableCache.containsKey(cacheKey)) {
+            if (mIconDrawableCache.containsKey(cacheKey)
+                    && mIconDrawableCache.get(cacheKey) != null) {
                 listener.onDrawableLoaded(mIconDrawableCache.get(cacheKey));
             } else if (icon.getType() == android.graphics.drawable.Icon.TYPE_URI) {
                 DrawableWrapper wrapper = new DrawableWrapper();
@@ -203,14 +203,15 @@ public class SubImageTemplateCard extends BcSmartspaceCardSecondary {
         List<Drawable> validDrawables =
                 drawables.values().stream().filter(Objects::nonNull).collect(Collectors.toList());
 
-        ImageView iv = imageViewRef.get();
         if (validDrawables.isEmpty()) {
-            Log.w(TAG, "All images failed to load. Resetting imageView");
-            if (iv != null) {
-                iv.getLayoutParams().width = -2;
-                iv.setImageDrawable(null);
-                iv.setBackgroundTintList(null);
+            Log.w(TAG, "All images are failed to load. Reset imageView");
+            ImageView iv = imageViewRef.get();
+            if (iv == null) {
+                return;
             }
+            iv.getLayoutParams().width = -2;
+            iv.setImageDrawable(null);
+            iv.setBackgroundTintList(null);
             return;
         }
 
@@ -219,15 +220,15 @@ public class SubImageTemplateCard extends BcSmartspaceCardSecondary {
             animationDrawable.addFrame(d, duration);
         }
 
-        if (iv != null) {
-            iv.setImageDrawable(animationDrawable);
-            int intrinsicWidth = animationDrawable.getIntrinsicWidth();
-            if (iv.getLayoutParams().width != intrinsicWidth) {
-                iv.getLayoutParams().width = intrinsicWidth;
-                iv.requestLayout();
-            }
-            animationDrawable.start();
+        ImageView imageView = imageViewRef.get();
+        imageView.setImageDrawable(animationDrawable);
+        int intrinsicWidth = animationDrawable.getIntrinsicWidth();
+        if (imageView.getLayoutParams().width != intrinsicWidth) {
+            Log.d(TAG, "imageView requestLayout");
+            imageView.getLayoutParams().width = intrinsicWidth;
+            imageView.requestLayout();
         }
+        animationDrawable.start();
     }
 
     private static final class DrawableWrapper {
@@ -246,32 +247,34 @@ public class SubImageTemplateCard extends BcSmartspaceCardSecondary {
             DrawableWrapper wrapper = wrappers[0];
             try (InputStream inputStream = wrapper.mContentResolver.openInputStream(wrapper.mUri)) {
                 ImageDecoder.Source source = ImageDecoder.createSource(null, inputStream);
-
-                wrapper.mDrawable =
-                        ImageDecoder.decodeDrawable(
-                                source,
-                                (decoder, info, src) -> {
-                                    decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
-                                    int height = info.getSize().getHeight();
-                                    float ratio =
-                                            height != 0
-                                                    ? (float) info.getSize().getWidth() / height
-                                                    : 0.0f;
-                                    decoder.setTargetSize(
-                                            (int) (wrapper.mHeightInPx * ratio),
-                                            wrapper.mHeightInPx);
-                                });
+                try {
+                    wrapper.mDrawable =
+                            ImageDecoder.decodeDrawable(
+                                    source,
+                                    (decoder, info, src) -> {
+                                        decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
+                                        int height = info.getSize().getHeight();
+                                        float ratio =
+                                                height != 0
+                                                        ? (float) info.getSize().getWidth()
+                                                                / height
+                                                        : 0.0f;
+                                        decoder.setTargetSize(
+                                                (int) (wrapper.mHeightInPx * ratio),
+                                                wrapper.mHeightInPx);
+                                    });
+                } catch (IOException e) {
+                    Log.e(TAG, "Unable to decode stream: " + e);
+                }
             } catch (Exception e) {
-                Log.w(TAG, "Failed to load uri: " + wrapper.mUri, e);
+                Log.w(TAG, "open uri:" + wrapper.mUri + " got exception:" + e);
             }
             return wrapper;
         }
 
         @Override
         protected void onPostExecute(DrawableWrapper wrapper) {
-            if (wrapper != null && wrapper.mListener != null) {
-                wrapper.mListener.onDrawableLoaded(wrapper.mDrawable);
-            }
+            wrapper.mListener.onDrawableLoaded(wrapper.mDrawable);
         }
     }
 }
