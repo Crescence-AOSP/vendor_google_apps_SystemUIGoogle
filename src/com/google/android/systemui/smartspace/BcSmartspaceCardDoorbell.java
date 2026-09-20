@@ -143,6 +143,8 @@ public class BcSmartspaceCardDoorbell extends BcSmartspaceCardGenericImage {
 
             if (!newUris.isEmpty()) {
                 mLatencyInstrumentContext.mUriSet.addAll(newUris);
+            }
+            if (!mLatencyInstrumentContext.mUriSet.isEmpty()) {
                 mLatencyInstrumentContext.mLatencyTracker.onActionStart(22);
             }
 
@@ -373,32 +375,26 @@ public class BcSmartspaceCardDoorbell extends BcSmartspaceCardGenericImage {
             if (result.mDrawable != null) {
                 result.setDrawable(result.mDrawable);
                 ImageView imageView = result.mImageViewWeakReference.get();
-                if (imageView != null) {
-                    int intrinsicWidth = result.mDrawable.getIntrinsicWidth();
-                    if (imageView.getLayoutParams().width != intrinsicWidth) {
-                        Log.d(TAG, "imageView requestLayout " + result.mUri);
-                        imageView.getLayoutParams().width = intrinsicWidth;
-                        imageView.requestLayout();
+                int intrinsicWidth = result.mDrawable.getIntrinsicWidth();
+                if (imageView.getLayoutParams().width != intrinsicWidth) {
+                    Log.d(TAG, "imageView requestLayout " + result.mUri);
+                    imageView.getLayoutParams().width = intrinsicWidth;
+                    imageView.requestLayout();
+                }
+                if (!mInstrumentContext.mUriSet.isEmpty()) {
+                    if (result.mUri == null || !mInstrumentContext.mUriSet.remove(result.mUri)) {
+                        mInstrumentContext.cancelInstrument();
+                    } else if (mInstrumentContext.mUriSet.isEmpty()) {
+                        mInstrumentContext.mLatencyTracker.onActionEnd(22);
                     }
                 }
-                if (result.mUri != null
-                        && mInstrumentContext.mUriSet.remove(result.mUri)
-                        && mInstrumentContext.mUriSet.isEmpty()) {
-                    mInstrumentContext.mLatencyTracker.onActionEnd(22);
-                } else if (result.mUri == null) {
-                    mInstrumentContext.cancelInstrument();
-                }
             } else {
-                ImageView imageView = result.mImageViewWeakReference.get();
-                if (imageView != null) {
-                    BcSmartspaceTemplateDataUtils.updateVisibility(imageView, View.GONE);
-                }
+                BcSmartspaceTemplateDataUtils.updateVisibility(
+                        result.mImageViewWeakReference.get(), View.GONE);
                 mInstrumentContext.cancelInstrument();
             }
-            View loadingScreen = result.mLoadingScreenWeakReference.get();
-            if (loadingScreen != null) {
-                BcSmartspaceTemplateDataUtils.updateVisibility(loadingScreen, View.GONE);
-            }
+            BcSmartspaceTemplateDataUtils.updateVisibility(
+                    result.mLoadingScreenWeakReference.get(), View.GONE);
         }
 
         @Override

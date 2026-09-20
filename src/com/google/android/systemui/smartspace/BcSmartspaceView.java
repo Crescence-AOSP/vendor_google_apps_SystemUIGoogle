@@ -247,6 +247,7 @@ public class BcSmartspaceView extends FrameLayout
                     > mTouchSlop) {
                 cancelScheduledLongPress();
             }
+        } else if (action == 3) {
             cancelScheduledLongPress();
         }
 
@@ -329,31 +330,30 @@ public class BcSmartspaceView extends FrameLayout
                 mAdapter.uiSurface, BcSmartspaceDataPlugin.UI_SURFACE_LOCK_SCREEN_AOD)) {
             try {
                 mBgHandler.post(
-                        () -> {
-                            int userId = getContext().getUserId();
-                            mIsAodEnabled =
-                                    Settings.Secure.getIntForUser(
-                                                    resolver, "doze_always_on", 0, userId)
-                                            == 1;
-                            resolver.registerContentObserver(
-                                    Settings.Secure.getUriFor("doze_always_on"),
-                                    false,
-                                    mAodObserver,
-                                    -1);
-                        });
+                        () ->
+                                resolver.registerContentObserver(
+                                        Settings.Secure.getUriFor("doze_always_on"),
+                                        false,
+                                        mAodObserver,
+                                        -1));
+                mIsAodEnabled =
+                        Settings.Secure.getIntForUser(
+                                        getContext().getContentResolver(),
+                                        "doze_always_on",
+                                        0,
+                                        getContext().getUserId())
+                                == 1;
             } catch (Exception e) {
                 Log.w("BcSmartspaceView", "Unable to register Doze Always on content observer.", e);
             }
         }
         try {
             mBgHandler.post(
-                    () -> {
-                        resolver.registerContentObserver(
-                                Settings.Secure.getUriFor("smartspace_settings_background"),
-                                false,
-                                mBackgroundToggleObserver,
-                                -1);
-                    });
+                    () ->
+                            resolver.registerContentObserver(
+                                    Settings.Secure.getUriFor("smartspace_settings_background"),
+                                    false,
+                                    mBackgroundToggleObserver));
         } catch (Exception e) {
             Log.w(
                     "BcSmartspaceView",
@@ -409,13 +409,19 @@ public class BcSmartspaceView extends FrameLayout
         super.onFinishInflate();
         View pager = findViewById(R.id.smartspace_card_pager);
         mViewPager2 = (ViewPager2) pager;
+        RecyclerView recyclerView = (RecyclerView) mViewPager2.getChildAt(0);
+        RecyclerView.ItemAnimator itemAnimator = recyclerView.getItemAnimator();
+        if (itemAnimator != null) {
+            itemAnimator.endAnimations();
+        }
+        recyclerView.setItemAnimator(null);
+        mViewPager2.setPageTransformer((page, position) -> {});
         mAdapter = new CardRecyclerViewAdapter(this, mConfigProvider);
         CardRecyclerViewAdapter cardRecyclerViewAdapter =
                 new CardRecyclerViewAdapter(this, mConfigProvider);
         cardRecyclerViewAdapter.uiSurface = BcSmartspaceDataPlugin.UI_SURFACE_HOME_SCREEN;
         cardRecyclerViewAdapter.setTargets(Collections.EMPTY_LIST, null);
         if (cardRecyclerViewAdapter.smartspaceTargets.size() > 0) {
-            RecyclerView recyclerView = (RecyclerView) mViewPager2.getChildAt(0);
             recyclerView.setRecycledViewPool(mRecycledViewPool);
             mPreInflatedViewHolder =
                     cardRecyclerViewAdapter.createViewHolder(
@@ -479,14 +485,8 @@ public class BcSmartspaceView extends FrameLayout
         setPivotY(desiredHeight / 2.0f);
     }
 
-    // ???
     public final void onSmartspaceTargetsUpdated(
             List<? extends Parcelable> targets, Runnable runnable) {
-        List<SmartspaceTarget> smartspaceTargets =
-                targets.stream()
-                        .filter(t -> t instanceof SmartspaceTarget)
-                        .map(t -> (SmartspaceTarget) t)
-                        .collect(Collectors.toList());
         if (DEBUG) {
             Log.d(
                     "BcSmartspaceView",
@@ -554,7 +554,7 @@ public class BcSmartspaceView extends FrameLayout
                         runnable.run();
                     }
                 };
-        mAdapter.setTargets(smartspaceTargets, updateTargetsRunnable);
+        mAdapter.setTargets(targets, updateTargetsRunnable);
     }
 
     @Override
@@ -794,7 +794,7 @@ public class BcSmartspaceView extends FrameLayout
     }
 
     public final void setSelectedDot(float f, int i) {
-        if (mPagerDots != null && i > 0 && i <= mPagerDots.numPages) {
+        if (mPagerDots != null && i >= 0 && i < mPagerDots.numPages) {
             mPagerDots.currentPositionIndex = i;
             mPagerDots.currentPositionOffset = f;
             mPagerDots.invalidate();
@@ -803,15 +803,6 @@ public class BcSmartspaceView extends FrameLayout
             }
             mPagerDots.updateCurrentPageIndex(i);
         }
-    }
-
-    // DOES NOT EXIST ???
-    public final void setSelectedPage(int i) {
-        mViewPager2.post(
-                () -> {
-                    mViewPager2.setCurrentItem(i, false);
-                });
-        setSelectedDot(0.0f, i);
     }
 
     @Override
