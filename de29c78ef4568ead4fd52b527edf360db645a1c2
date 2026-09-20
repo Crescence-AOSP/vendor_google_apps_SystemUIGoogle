@@ -18,6 +18,24 @@
       "serverId": "c809e42e-2716-43b8-85a5-914f291e2dfa"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "6155205e_72900926",
+        "filename": "src/com/google/android/systemui/smartspace/BcSmartspaceCardDoorbell.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 202,
+      "author": {
+        "id": 1000000
+      },
+      "writtenOn": "2026-09-20T08:30:12Z",
+      "side": 0,
+      "message": "Acknowledged",
+      "parentUuid": "f5c17c07_529dc413",
+      "revId": "de29c78ef4568ead4fd52b527edf360db645a1c2",
+      "serverId": "c809e42e-2716-43b8-85a5-914f291e2dfa"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "f54393e5_4d87d205",
