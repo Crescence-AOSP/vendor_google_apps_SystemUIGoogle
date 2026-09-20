@@ -50,38 +50,38 @@ public class DateSmartspaceView extends LinearLayout
 
     @Override
     public final void onAttachedToWindow() {
-        Handler handler;
         super.onAttachedToWindow();
         if (TextUtils.equals(mUiSurface, BcSmartspaceDataPlugin.UI_SURFACE_LOCK_SCREEN_AOD)) {
             try {
-                handler = mBgHandler;
+                Handler handler = mBgHandler;
+                if (handler == null) {
+                    throw new IllegalStateException(
+                            "Must set background handler to avoid making binder calls on main"
+                                    + " thread");
+                }
+                handler.post(
+                        () -> {
+                            getContext()
+                                    .getContentResolver()
+                                    .registerContentObserver(
+                                            Settings.Secure.getUriFor("doze_always_on"),
+                                            false,
+                                            mAodSettingsObserver,
+                                            -1);
+                        });
+                mIsAodEnabled =
+                        Settings.Secure.getIntForUser(
+                                        getContext().getContentResolver(),
+                                        "doze_always_on",
+                                        0,
+                                        getContext().getUserId())
+                                == 1;
             } catch (Exception e) {
                 Log.w(
                         "DateSmartspaceView",
                         "Unable to register DOZE_ALWAYS_ON content observer: ",
                         e);
             }
-            if (mBgHandler == null) {
-                throw new IllegalStateException(
-                        "Must set background handler to avoid making binder calls on main thread");
-            }
-            mBgHandler.post(
-                    () -> {
-                        getContext()
-                                .getContentResolver()
-                                .registerContentObserver(
-                                        Settings.Secure.getUriFor("doze_always_on"),
-                                        false,
-                                        mAodSettingsObserver,
-                                        -1);
-                    });
-            mIsAodEnabled =
-                    Settings.Secure.getIntForUser(
-                                    getContext().getContentResolver(),
-                                    "doze_always_on",
-                                    0,
-                                    getContext().getUserId())
-                            == 1;
         }
         BcSmartspaceCardLoggingInfo.Builder builder =
                 new BcSmartspaceCardLoggingInfo.Builder()

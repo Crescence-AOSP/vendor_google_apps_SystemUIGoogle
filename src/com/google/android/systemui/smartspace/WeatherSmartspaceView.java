@@ -123,24 +123,18 @@ public class WeatherSmartspaceView extends LinearLayout
 
     @Override
     public final void onSmartspaceTargetsUpdated(List<? extends Parcelable> targets) {
-        List<SmartspaceTarget> smartspaceTargets =
-                targets.stream()
-                        .filter(t -> t instanceof SmartspaceTarget)
-                        .map(t -> (SmartspaceTarget) t)
-                        .collect(java.util.stream.Collectors.toList());
-        if (smartspaceTargets.size() > 1) {
+        if (targets.size() > 1) {
             return;
         }
-        if (smartspaceTargets.isEmpty()
-                && TextUtils.equals(mUiSurface, BcSmartspaceDataPlugin.UI_SURFACE_DREAM)) {
+        if (targets.isEmpty() && TextUtils.equals(mUiSurface, BcSmartspaceDataPlugin.UI_SURFACE_DREAM)) {
             return;
         }
-        if (smartspaceTargets.isEmpty()) {
+        if (targets.isEmpty()) {
             BcSmartspaceTemplateDataUtils.updateVisibility(mView, View.GONE);
             return;
         }
         BcSmartspaceTemplateDataUtils.updateVisibility(mView, View.VISIBLE);
-        SmartspaceTarget target = smartspaceTargets.get(0);
+        SmartspaceTarget target = (SmartspaceTarget) targets.get(0);
         if (target.getFeatureType() != 1) {
             return;
         }

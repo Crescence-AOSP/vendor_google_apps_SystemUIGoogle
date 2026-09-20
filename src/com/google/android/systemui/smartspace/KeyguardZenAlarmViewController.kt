@@ -16,6 +16,7 @@ import com.android.systemui.smartspace.dagger.SmartspaceModule
 import com.android.systemui.statusbar.policy.NextAlarmController
 import com.android.systemui.statusbar.policy.NextAlarmControllerImpl
 import com.android.systemui.statusbar.policy.ZenModeController
+import com.android.systemui.statusbar.policy.ZenModeControllerImpl
 import com.android.systemui.statusbar.policy.domain.interactor.ZenModeInteractor
 import com.android.systemui.statusbar.policy.domain.model.ZenModeInfo
 import com.google.android.systemui.res.R
@@ -24,6 +25,7 @@ import javax.inject.Inject
 import javax.inject.Named
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -102,6 +104,7 @@ constructor(
         }
     }
 
+    @OptIn(InternalCoroutinesApi::class)
     fun showAlarm(alarmTime: Long?): Job = applicationScope.launch {
         val time = alarmTime ?: getNextAlarmTime()
         val alarmString =
@@ -116,25 +119,19 @@ constructor(
         smartspaceViews.forEach { view ->
             if (alarmString != null) {
                 view.setNextAlarm(alarmImage, alarmString)
-                // StateFlowImpl stateFlowImpl =
-                // this.this$0.zenModeInteractor.zenModeRepository.hasNextAlarm;
-                // Boolean bool = Boolean.TRUE;
-                // stateFlowImpl.getClass();
-                // stateFlowImpl.updateState(null, bool);
+                zenModeInteractor.zenModeRepository.hasNextAlarm.updateState(null, true)
             } else {
                 view.setNextAlarm(null, null)
-                // StateFlowImpl stateFlowImpl2 =
-                // this.this$0.zenModeInteractor.zenModeRepository.hasNextAlarm;
-                // Boolean bool2 = Boolean.FALSE;
-                // stateFlowImpl2.getClass();
-                // stateFlowImpl2.updateState(null, bool2);
+                zenModeInteractor.zenModeRepository.hasNextAlarm.updateState(null, false)
             }
         }
     }
 
     private suspend fun getNextAlarmTime(): Long =
         withContext(bgDispatcher) {
-            val nextAlarm = alarmManager.getNextAlarmClock(ActivityManager.getCurrentUser())
+            val zenModeControllerImpl = zenModeController as ZenModeControllerImpl
+            val nextAlarm =
+                zenModeControllerImpl.mAlarmManager.getNextAlarmClock(zenModeControllerImpl.mUserId)
             nextAlarm?.triggerTime ?: 0L
         }
 
