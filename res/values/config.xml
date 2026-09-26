@@ -2,4 +2,7 @@
 <resources>
     <!-- Whether to show extreme battery saver reminder -->
     <bool name="config_show_extreme_battery_saver_reminder">true</bool>
+
+    <!-- Whether to use Google's extra battery saver confirmation dialog -->
+    <bool name="config_extra_battery_saver_confirmation">true</bool>
 </resources>
